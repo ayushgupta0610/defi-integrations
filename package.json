@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@headlessui/react": "^1.7.15",
+    "@heroicons/react": "^2.0.18",
     "@nomicfoundation/hardhat-toolbox": "^3.0.0",
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@types/node": "20.2.6",
