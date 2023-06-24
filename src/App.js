@@ -9,7 +9,10 @@ function App() {
   const [walletAddress, setWalletAddress] = useState("");
   const [signer, setSigner] = useState();
   const [loading, setLoading] = useState(false);
-  const [inputAddress, setInputValue] = useState("");
+  const [convertLoading, setConvertLoading] = useState(false);
+  const [liquidityLoading, setLiquidityLoading] = useState(false);
+  const [token1Value, setToken1Value] = useState("");
+  const [token2Value, setToken2Value] = useState("");
   const [approvalLoading, setApprovalLoading] = useState(false);
   const [swapLoading, setSwapLoading] = useState(false);
 
@@ -37,16 +40,6 @@ function App() {
     setLoading(false);
   }
 
-  async function approve() {
-    try {
-      setApprovalLoading(true);
-
-    } catch (error) {
-      console.error(error);
-    }
-    setApprovalLoading(false);
-  }
-
   async function setWalletSigner() {
     try {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -60,6 +53,36 @@ function App() {
     } catch (error) {
       console.error(error);
     }
+  }
+
+  async function checkLiquidity(userAddress, token1, token2) {
+    try {
+      setLiquidityLoading(true);
+
+    } catch (error) {
+      console.error(error);
+    }
+    setLiquidityLoading(false);
+  }
+
+  async function convert() {
+    try {
+      setConvertLoading(true);
+
+    } catch (error) {
+      console.error(error);
+    }
+    setConvertLoading(false);
+  }
+
+  async function approve() {
+    try {
+      setApprovalLoading(true);
+
+    } catch (error) {
+      console.error(error);
+    }
+    setApprovalLoading(false);
   }
 
   async function swap() { 
@@ -92,12 +115,40 @@ function App() {
           basic
           color="teal"
           loading={loading}
-          onClick={() => {
-            connectWallet();
-          }}
+          onClick={() => connectWallet()}
         >
           {walletAddress ? walletAddress : "Connect Wallet"}
         </Button>
+        <Button
+          basic
+          color="blue"
+          loading={liquidityLoading}
+          onClick={() => {
+            checkLiquidity();
+          }}
+        >
+          Convert MATIC and USDC Liquidity
+        </Button>
+        <Button
+          basic
+          color="blue"
+          loading={convertLoading}
+          onClick={() => {
+            convert();
+          }}
+        >
+          Convert USDT to MATIC and USDC
+        </Button>
+        <Input
+          placeholder="Token 1 value"
+          onChange={(e) => setToken1Value(e.target.value)}
+          value={token1Value}
+        ></Input>
+         <Input
+          placeholder="Token 2 value"
+          onChange={(e) => setToken2Value(e.target.value)}
+          value={token2Value}
+        ></Input>
         <Button
           basic
           color="purple"
@@ -107,11 +158,6 @@ function App() {
           {" "}
           Approve{" "}
         </Button>
-        <Input
-          placeholder="Swap token"
-          onChange={(e) => setInputValue(e.target.value)}
-          value={inputAddress}
-        ></Input>
         <Button
           basic
           color="orange"
