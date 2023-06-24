@@ -3,13 +3,19 @@ import "./App.css";
 import { useEffect, useState } from "react";
 import { Button, Input } from "semantic-ui-react";
 import { ethers } from "ethers";
+import axios from "axios";
+import ExampleDapp from "../artifacts/contracts/ExampleDapp.sol/ExampleDapp.json";
+import UniswapV2Factory from "../artifacts/@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol/IUniswapV2Factory.json";
+import config from "./config";
 
+const network = "polygon";
 
 function App() {
   const [walletAddress, setWalletAddress] = useState("");
   const [signer, setSigner] = useState();
   const [loading, setLoading] = useState(false);
   const [convertLoading, setConvertLoading] = useState(false);
+  const [pairAddressLoading, setPairAddressLoading] = useState(false);
   const [liquidityLoading, setLiquidityLoading] = useState(false);
   const [token1Value, setToken1Value] = useState("");
   const [token2Value, setToken2Value] = useState("");
@@ -49,21 +55,54 @@ function App() {
       const walletSigner = provider.getSigner();
       console.log("Signer address: ", await walletSigner.getAddress());
       setSigner(walletSigner);
-      console.log("Signer: ", signer);
     } catch (error) {
       console.error(error);
     }
   }
 
-  async function checkLiquidity(userAddress, token1, token2) {
+  async function getGasPrice(txnSpeed = 'standard') {
+    try {
+      console.log(`Fetching gas price from ${config[network].gasStationUrl}`);
+      const { data } = await axios.get(config[network].gasStationUrl);
+      const maxFeePerGas = Math.ceil(data[txnSpeed].maxFee) * 10 ** 9;
+      const maxPriorityFeePerGas = Math.ceil(data[txnSpeed].maxPriorityFee) * 10 ** 9;
+      return { maxFeePerGas, maxPriorityFeePerGas };
+    } catch (error) {
+      console.error(error);
+    }
+};
+
+  async function checkLiquidity(token1, token2) {
     try {
       setLiquidityLoading(true);
-
+      const exampleDapp = new ethers.Contract(config[network].exampleDappAddress, ExampleDapp.abi, signer);
+      // const { maxFeePerGas, maxPriorityFeePerGas } = await getGasPrice('fast');
+      token1 = token1 || config[network].usdcAddress;
+      token2 = token2 || config[network].maticAddress;
+      const pairInfo = await exampleDapp.pairInfo(token1, token2);
+      console.log(`token1: ${token1} reserve is: ${pairInfo.reserveA.toString()}`);
+      console.log(`token2: ${token2} reserve is: ${pairInfo.reserveB.toString()}`);
+      console.log(`Total supply is: ${pairInfo.totalSupply.toString()}`);
     } catch (error) {
       console.error(error);
     }
     setLiquidityLoading(false);
   }
+
+  async function getLiquidtyPairAddress(token1, token2) {
+    try {
+      setPairAddressLoading(true);
+      const uniswapV2Factory = new ethers.Contract(config[network].uniswapV2FactoryAddress, UniswapV2Factory.abi, signer);
+      token1 = token1 || config[network].usdcAddress;
+      token2 = token2 || config[network].maticAddress;
+      const pairAddress = await uniswapV2Factory.getPair(token1, token2);
+      console.log(`Pair address for ${token1} and ${token2} is: ${pairAddress}`);
+    } catch (error) {
+      console.error(error);
+    }
+    setPairAddressLoading(false);
+  }
+
 
   async function convert() {
     try {
@@ -118,6 +157,16 @@ function App() {
           onClick={() => connectWallet()}
         >
           {walletAddress ? walletAddress : "Connect Wallet"}
+        </Button>
+        <Button
+          basic
+          color="green"
+          loading={pairAddressLoading}
+          onClick={() => {
+            getLiquidtyPairAddress();
+          }}
+        >
+          Get Liquidity Pair Address
         </Button>
         <Button
           basic

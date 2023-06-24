@@ -18,12 +18,14 @@
     "@types/mocha": ">=9.1.0",
     "@uniswap/v2-core": "^1.0.1",
     "@uniswap/v2-periphery": "^1.1.0-beta.0",
+    "axios": "^1.4.0",
     "chai": "^4.2.0",
     "dotenv": "^16.3.1",
     "ethers": "^5.7.2",
     "hardhat": "^2.15.0",
     "hardhat-gas-reporter": "^1.0.8",
     "react": "^18.2.0",
+    "react-app-rewired": "^2.2.1",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
     "semantic-ui-css": "^2.5.0",
@@ -35,12 +37,11 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
     "contracts-compile": "npx hardhat compile",
-    "contracts-deploy": "npx hardhat run scripts/deploy.js"
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
+    "eject": "react-app-rewired eject"
   },
   "eslintConfig": {
     "extends": [
