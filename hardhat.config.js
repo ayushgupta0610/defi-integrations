@@ -9,20 +9,19 @@ const walletUtils = require('./walletUtils');
 const config = {
   defaultNetwork: 'hardhat',
   networks: {
-    hardhat: {},
     mumbai: {
-      url: `https://polygon-mumbai.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}` || '',
+      url: `https://polygon-mumbai.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
       // @ts-ignore
       accounts: process.env.PRIVATE_KEY1 !== undefined ? [process.env.PRIVATE_KEY1] : walletUtils.createPrivateKeyList(),
     },
     polygon: {
-      url: `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}` || '',
+      url: `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
       // @ts-ignore
       accounts: process.env.PRIVATE_KEY1 !== undefined ? [process.env.PRIVATE_KEY1] : walletUtils.createPrivateKeyList(),
     },
   },
   etherscan: {
-    apiKey: process.env.POLYGONSCAN_API_KEY || '',
+    apiKey: `${process.env.POLYGONSCAN_API_KEY}`,
   },
   solidity: {
     compilers: [

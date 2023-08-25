@@ -7,7 +7,6 @@ async function main() {
 
   const ExampleDapp = await ethers.getContractFactory("ExampleDapp");
   const exampleDapp = await ExampleDapp.deploy(factory, uniswapV2router02);
-  await exampleDapp.wait();
 
   console.log(`Example dapp address: ${exampleDapp.address}`);
 
