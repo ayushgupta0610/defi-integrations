@@ -37,11 +37,12 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "contracts-compile": "npx hardhat compile",
+    "compile": "npx hardhat compile",
     "start": "react-app-rewired start",
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
-    "eject": "react-app-rewired eject"
+    "eject": "react-app-rewired eject",
+    "deploy": "npx hardhat run scripts/deploy.ts --network polygon"
   },
   "eslintConfig": {
     "extends": [

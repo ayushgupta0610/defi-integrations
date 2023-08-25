@@ -6,7 +6,7 @@ const config = {
     polygon: {
         rpcUrl: 'https://polygon-rpc.com',
         gasStationUrl: 'https://gasstation.polygon.technology/v2',
-        exampleDappAddress: '0x5426BE9ec8B548dC2CAd1c56dFF082681B8EF377',
+        exampleDappAddress: '0xEfaBcAA200A6997b12a13b7E659EFb99cdD18826',
         uniswapV2FactoryAddress: '0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32',
         uniswapV2Router02Address: '0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff',
         usdcAddress: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
@@ -21,4 +21,6 @@ const config = {
     }
 }
 
-export default config;
+module.exports = {
+    config
+};

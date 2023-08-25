@@ -1,18 +1,36 @@
 import { ethers } from "hardhat";
+import { config } from "../src/config";
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-  const unlockTime = currentTimestampInSeconds + ONE_YEAR_IN_SECS;
+  const factory = config['polygon'].uniswapV2FactoryAddress;
+  const uniswapV2router02 = config['polygon'].uniswapV2Router02Address;
 
-  const lockedAmount = ethers.utils.parseEther("1");
+  const ExampleDapp = await ethers.getContractFactory("ExampleDapp");
+  const exampleDapp = await ExampleDapp.deploy(factory, uniswapV2router02);
+  await exampleDapp.wait();
 
-  const Lock = await ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
+  console.log(`Example dapp address: ${exampleDapp.address}`);
 
-  await lock.deployed();
+    // * only verify on testnets or mainnets.
+    if (process.env.ETHERSCAN_API_KEY) {
+      await verify(exampleDapp.address, [factory, uniswapV2router02]);
+  }
+}
 
-  console.log(`Lock with 1 ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`);
+const verify = async (contractAddress, args) => {
+  console.log("Verifying contract...");
+  try {
+      // setTimeout(await run("verify:verify", {
+      //     address: contractAddress,
+      //     constructorArguments: args,
+      // }), 2000);
+  } catch (e) {
+      if (e.message.toLowerCase().includes("already verified")) {
+          console.log("Already verified!");
+      } else {
+          console.log(e);
+      }
+  }
 }
 
 // We recommend this pattern to be able to use async/await everywhere

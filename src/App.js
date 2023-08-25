@@ -6,6 +6,7 @@ import { ethers } from "ethers";
 import axios from "axios";
 import ExampleDapp from "../artifacts/contracts/ExampleDapp.sol/ExampleDapp.json";
 import UniswapV2Factory from "../artifacts/@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol/IUniswapV2Factory.json";
+import IERC20 from "../artifacts/contracts/IERC20.sol/IERC20.json";
 import config from "./config";
 
 const network = "polygon";
@@ -17,6 +18,7 @@ function App() {
   const [convertLoading, setConvertLoading] = useState(false);
   const [pairAddressLoading, setPairAddressLoading] = useState(false);
   const [liquidityLoading, setLiquidityLoading] = useState(false);
+  const [fetchedPrice, setFetchedPrice] = useState("");
   const [token1Value, setToken1Value] = useState("");
   const [token2Value, setToken2Value] = useState("");
   const [approvalLoading, setApprovalLoading] = useState(false);
@@ -80,8 +82,8 @@ function App() {
       token1 = token1 || config[network].usdcAddress;
       token2 = token2 || config[network].maticAddress;
       const pairInfo = await exampleDapp.pairInfo(token1, token2);
-      console.log(`token1: ${token1} reserve is: ${pairInfo.reserveA.toString()}`);
-      console.log(`token2: ${token2} reserve is: ${pairInfo.reserveB.toString()}`);
+      console.log(`USDC: ${token1} reserve is: ${pairInfo.reserveA.toString()}`);
+      console.log(`MATIC: ${token2} reserve is: ${pairInfo.reserveB.toString()}`);
       console.log(`Total supply is: ${pairInfo.totalSupply.toString()}`);
     } catch (error) {
       console.error(error);
@@ -104,17 +106,31 @@ function App() {
   }
 
 
-  async function convert() {
+  async function swapToMatic(token1) {
     try {
       setConvertLoading(true);
-
+      token1 = token1 || config[network].usdcAddress;
+      const exampleDapp = new ethers.Contract(config[network].exampleDappAddress, ExampleDapp.abi, signer);
+      const tokenInstance = new ethers.Contract(token1, IERC20.abi, signer);
+      const { maxFeePerGas, maxPriorityFeePerGas } = await getGasPrice('standard');
+      const amountOutMin = 0; // Since this is a demo project we are not calculating the min no. of tokens we will receive
+      const allowanceCheck = await tokenInstance.allowance(walletAddress, config[network].exampleDappAddress);
+      token1Value = ethers.utils.parseUnits(token1Value, 6);
+      if (allowanceCheck.lt(token1Value)) {
+        const approve = await tokenInstance.approve(config[network].exampleDappAddress, ethers.constants.MaxUint256, { maxFeePerGas, maxPriorityFeePerGas });
+        const approveReceipt = await approve.wait();
+        console.log(`Approve txn confirmed: ${approveReceipt.transactionHash}`);
+      }
+      const swapForETH = await exampleDapp.swapForETH(token1, token1Value, amountOutMin, { maxFeePerGas, maxPriorityFeePerGas });
+      const swapForETHReceipt = await swapForETH.wait();
+      console.log(`Swap for ETH txn confirmed: ${swapForETHReceipt.transactionHash}`);
     } catch (error) {
       console.error(error);
     }
     setConvertLoading(false);
   }
 
-  async function approve() {
+  async function provideLiquidity() {
     try {
       setApprovalLoading(true);
 
@@ -127,7 +143,11 @@ function App() {
   async function swap() { 
     try {
       setSwapLoading(true);
-
+      // We want to buy fixed amount of token2 (MATIC) for token1 (USDC)
+      const token1 = config[network].usdcAddress;
+      const token2 = config[network].maticAddress;
+      const exampleDapp = new ethers.Contract(config[network].exampleDappAddress, ExampleDapp.abi, signer);
+      const token1Instance = new ethers.Contract(token1, IERC20.abi, signer);
     } catch (error) {
       console.error(error);
     }
@@ -176,37 +196,23 @@ function App() {
             checkLiquidity();
           }}
         >
-          Convert MATIC and USDC Liquidity
+          Check USDC and MATIC Liquidity
         </Button>
         <Button
           basic
           color="blue"
           loading={convertLoading}
           onClick={() => {
-            convert();
+            swapToMatic();
           }}
         >
-          Convert USDT to MATIC and USDC
+          Swap USDC to MATIC
         </Button>
         <Input
-          placeholder="Token 1 value"
+          placeholder="USDC value"
           onChange={(e) => setToken1Value(e.target.value)}
           value={token1Value}
         ></Input>
-         <Input
-          placeholder="Token 2 value"
-          onChange={(e) => setToken2Value(e.target.value)}
-          value={token2Value}
-        ></Input>
-        <Button
-          basic
-          color="purple"
-          loading={approvalLoading}
-          onClick={() => approve()}
-        >
-          {" "}
-          Approve{" "}
-        </Button>
         <Button
           basic
           color="orange"
@@ -214,7 +220,21 @@ function App() {
           onClick={() => swap()}
         >
           {" "}
-          Swap{" "}
+          Buy MATIC from USDC {" "}
+        </Button>
+         <Input
+          placeholder="MATIC value"
+          onChange={(e) => setToken2Value(e.target.value)}
+          value={token2Value}
+        ></Input>
+        <Button
+          basic
+          color="purple"
+          loading={approvalLoading}
+          onClick={() => provideLiquidity()}
+        >
+          {" "}
+          Provide Liquidity{" "}
         </Button>
       </header>
     </div>
