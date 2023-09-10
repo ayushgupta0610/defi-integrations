@@ -40,6 +40,7 @@ contract ExampleDapp {
     //  Exact ETH => TokenA
     // No need of approval for tokenToSwapWith as the token to swap with is ETH
     function swapExactETHForTokens(address tokenToSwapTo, uint amountIn, uint amountOutMin) external payable returns (uint[] memory amounts) {
+        require(msg.value == amountIn, "ED: insufficient value provided");
         address[] memory path = new address[](2);
         path[0] = uniswapV2router02.WETH();
         path[1] = tokenToSwapTo;
@@ -71,7 +72,7 @@ contract ExampleDapp {
 
     // ETH => Exact TokenA [Testcase not working]
     function swapETHForExactTokens(address tokenToSwapTo, uint amountOut, uint amountInMax) external payable returns (uint[] memory amounts) {
-        require(msg.value >= amountInMax,"ED: insufficient value provided");
+        require(msg.value == amountInMax, "ED: insufficient value provided");
         address[] memory path = new address[](2);
         path[0] = uniswapV2router02.WETH();
         path[1] = tokenToSwapTo;

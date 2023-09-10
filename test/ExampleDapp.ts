@@ -7,7 +7,6 @@ const DECIMALS_IN_WETH = 18;
  
 describe("ExampleDapp", function() {
   let exampleDapp;
-  let uniswapFactory;
   let uniswapV2Router02;
   let usdc;
   let weth;
@@ -35,8 +34,6 @@ describe("ExampleDapp", function() {
     // Deploy ERC20 tokens for testing
     usdc = new ethers.Contract(chains[network.name].usdcAddress, erc20Abi, ethers.provider);
     weth = new ethers.Contract(chains[network.name].wethAddress, erc20Abi, ethers.provider);
-    const balance = await usdc.balanceOf(addressWithUSDC);
-    console.log("Balance of address with usdc: ", ethers.BigNumber.from(balance).div(10**DECIMALS_IN_USDC).toString());
   });
 
   it("should return pair info", async function() {
@@ -68,7 +65,7 @@ describe("ExampleDapp", function() {
     await exampleDapp.connect(user2).swapExactETHForTokens(usdc.address, amountIn, amountOutMin, { value: amountIn });
     const userTokenBalanceAfter = await usdc.balanceOf(user2.address);
     const userNativeBalanceAfter = await ethers.provider.getBalance(user2.address);
-    expect(userTokenBalanceAfter).to.be.gt(userTokenBalanceBefore);
+    expect(userTokenBalanceAfter).to.be.gt(userTokenBalanceBefore.add(amountOutMin));
     expect(userNativeBalanceAfter).to.be.lt(userNativeBalanceBefore);
   });
 
@@ -82,7 +79,7 @@ describe("ExampleDapp", function() {
     const userUsdcBalanceAfter = await usdc.balanceOf(user2.address);
     const userWethBalanceAfter = await weth.balanceOf(user2.address);
     expect(userUSDCBalanceBefore).to.be.gt(userUsdcBalanceAfter);
-    expect(userWETHBalanceBefore).to.be.lt(userWethBalanceAfter);
+    expect(userWETHBalanceBefore).to.be.lt(userWethBalanceAfter.add(amountOutMin));
   });
 
   it("should swap tokens for exact ETH", async function() {
@@ -99,7 +96,7 @@ describe("ExampleDapp", function() {
   });
 
   it("should swap ETH for exact tokens", async function() {
-    const amountOut = ethers.utils.parseUnits("1000", DECIMALS_IN_USDC);
+    const amountOut = ethers.utils.parseUnits("100", DECIMALS_IN_USDC);
     const amountInMax = ethers.utils.parseEther("1"); // TODO: Check if this should be zero? Ideally user would want a certain amount that can be factored as per 3% slippage
     const userUSDCBalanceBefore = await usdc.balanceOf(user2.address);
     const userNativeBalanceBefore = await ethers.provider.getBalance(user2.address);
@@ -110,14 +107,47 @@ describe("ExampleDapp", function() {
     expect(userNativeBalanceBefore).to.be.gt(userNativeBalanceAfter);
   });
 
-  // it("should swap tokens for exact tokens", async function() {
-  //   const amountInMax = ethers.utils.parseEther("10");
-  //   const amountOut = ethers.utils.parseEther("10");
-  //   await usdc.mint(user.address, amountInMax);
-  //   await usdc.connect(user2).approve(exampleDapp.address, amountInMax);
-  //   const userBalanceBefore = await weth.balanceOf(user.address);
-  //   await exampleDapp.connect(user2).swapTokensForExactTokens(usdc.address, weth.address, amountInMax, amountOut);
-  //   const userBalanceAfter = await weth.balanceOf(user.address);
-  //   expect(userBalanceAfter).to.be.gt(userBalanceBefore);
+  it("should swap tokens for exact tokens", async function() {
+    const amountInMax = ethers.utils.parseUnits("1000", DECIMALS_IN_USDC);
+    const amountOut = ethers.utils.parseEther(".1"); // TODO: Check if this should be zero? Ideally user would want a certain amount that can be factored as per 3% slippage
+    await usdc.connect(user2).approve(exampleDapp.address, amountInMax);
+    const userUSDCBalanceBefore = await usdc.balanceOf(user2.address);
+    const userWETHBalanceBefore = await weth.balanceOf(user2.address);
+    await exampleDapp.connect(user2).swapTokensForExactTokens(usdc.address, weth.address, amountInMax, amountOut);
+    const userUsdcBalanceAfter = await usdc.balanceOf(user2.address);
+    const userWethBalanceAfter = await weth.balanceOf(user2.address);
+    expect(userUSDCBalanceBefore).to.be.gt(userUsdcBalanceAfter);
+    expect(userWETHBalanceBefore.add(amountOut)).to.be.equal(userWethBalanceAfter);
+  });
+
+  it("should add liquidity", async function() {
+    const amountOfTokenA = ethers.utils.parseUnits("1000", DECIMALS_IN_USDC);
+    const amountOfTokenB = ethers.utils.parseEther("2");
+    await usdc.connect(user2).approve(exampleDapp.address, amountOfTokenA);
+    await weth.connect(user2).approve(exampleDapp.address, amountOfTokenB);
+    const [reserveABefore, reserveBBefore, totalSupplyBefore] = await exampleDapp.pairInfo(usdc.address, weth.address);
+    await exampleDapp.connect(user2).addLiquidity(usdc.address, weth.address, amountOfTokenA, amountOfTokenB);
+    const [reserveAAfter, reserveBAfter, totalSupplyAfter] = await exampleDapp.pairInfo(usdc.address, weth.address);
+    // Verify that liquidity has been added
+    expect(totalSupplyAfter).to.be.gt(totalSupplyBefore);
+    expect(reserveAAfter).to.be.gt(reserveABefore);
+    expect(reserveBAfter).to.be.gt(reserveBBefore);
+  });
+
+  // it("should add liquidity with ETH", async function() {
+  //   const amountOfTokenA = ethers.utils.parseUnits("1000", DECIMALS_IN_USDC);
+  //   const amountOfTokenB = ethers.utils.parseEther("2");
+  //   await usdc.connect(user2).approve(exampleDapp.address, amountOfTokenA);
+  //   await weth.connect(user2).approve(exampleDapp.address, amountOfTokenB);
+  //   const [reserveTokenBefore, reserveETHBefore, totalSupplyBefore] = await exampleDapp.pairInfo(usdc.address, chains[network.name].wethAddress);
+
+  //   await exampleDapp.connect(user).addLiquidityETH(usdc.address, amountTokenDesired, { value: ethers.utils.parseEther("1") });
+
+  //   const [reserveTokenAfter, reserveETHAfter, totalSupplyAfter] = await exampleDapp.pairInfo(usdc.address, chains[network.name].wethAddress);
+
+  //   // Verify that liquidity has been added
+  //   expect(totalSupplyAfter).to.be.gt(totalSupplyBefore);
+  //   expect(reserveTokenAfter).to.be.gt(reserveTokenBefore);
+  //   expect(reserveETHAfter).to.be.gt(reserveETHBefore);
   // });
 });
