@@ -22,7 +22,7 @@ const verify = async (contractAddress, args) => {
       // setTimeout(await run("verify:verify", {
       //     address: contractAddress,
       //     constructorArguments: args,
-      // }), 2000);
+      // }), 10000);
   } catch (e) {
       if (e.message.toLowerCase().includes("already verified")) {
           console.log("Already verified!");

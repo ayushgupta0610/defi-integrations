@@ -19,6 +19,13 @@ const config = {
       // @ts-ignore
       accounts: process.env.PRIVATE_KEY1 !== undefined ? [process.env.PRIVATE_KEY1] : walletUtils.createPrivateKeyList(),
     },
+    hardhat: {
+      forking: {
+        url: "https://eth-mainnet.g.alchemy.com/v2/uURcc1Jp4oisVnCmrwrmqNozEC9QD_6h",
+        accounts: process.env.PRIVATE_KEY1 !== undefined ? [process.env.PRIVATE_KEY1] : walletUtils.createPrivateKeyList(),
+        blockNumber: 12939927
+      }
+    }
   },
   etherscan: {
     apiKey: `${process.env.POLYGONSCAN_API_KEY}`,
