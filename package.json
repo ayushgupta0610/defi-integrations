@@ -44,9 +44,9 @@
     "eject": "react-app-rewired eject",
     "deploy-example-mumbai": "npx hardhat run scripts/deploy.ts --network mumbai",
     "deploy-example-polygon": "npx hardhat run scripts/deploy.ts --network polygon",
-    "test-example-mumbai": "npx hardhat test test/ExampleDapp.ts --network mumbai",
-    "test-example-polygon": "npx hardhat run test/ExampleDapp.ts --network polygon",
-    "test-example-ethereum": "npx hardhat test test/ExampleDapp.ts --network hardhat"
+    "test-example-mumbai": "npx hardhat test test/UniswapV2Wrapper.ts --network mumbai",
+    "test-example-polygon": "npx hardhat run test/UniswapV2Wrapper.ts --network polygon",
+    "test-example-ethereum": "npx hardhat test test/UniswapV2Wrapper.ts --network hardhat"
   },
   "eslintConfig": {
     "extends": [

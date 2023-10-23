@@ -6,7 +6,7 @@ import "./UniswapV2/interfaces/IUniswapV2Pair.sol";
 import "./UniswapV2/interfaces/IUniswapV2Router02.sol";
 import "./UniswapV2/interfaces/IUniswapV2Factory.sol";
 
-contract ExampleDapp {
+contract UniswapV2Wrapper {
     address public factory;
     IUniswapV2Router02 public uniswapV2router02;
     
@@ -16,7 +16,7 @@ contract ExampleDapp {
         uniswapV2router02 = IUniswapV2Router02(_uniswapV2router02);
     }
 
-    // Get pair info when given pair info
+    // Get pair info when given pair info [Can be accessed directly]
     function pairInfo(address tokenA, address tokenB) external view returns (uint reserveA, uint reserveB, uint totalSupply) {
         address _pair = IUniswapV2Factory(factory).getPair(tokenA, tokenB);
         IUniswapV2Pair pair = IUniswapV2Pair(_pair);
