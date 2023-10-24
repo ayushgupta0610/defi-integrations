@@ -21,9 +21,9 @@ const config = {
     },
     hardhat: {
       forking: {
-        url: "https://eth-mainnet.g.alchemy.com/v2/uURcc1Jp4oisVnCmrwrmqNozEC9QD_6h",
+        url: `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
         accounts: process.env.PRIVATE_KEY1 !== undefined ? [process.env.PRIVATE_KEY1] : walletUtils.createPrivateKeyList(),
-        blockNumber: 12939927
+        blockNumber: 49086266
       }
     }
   },

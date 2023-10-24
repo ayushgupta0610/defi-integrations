@@ -8,35 +8,59 @@ const DECIMALS_IN_WETH = 18;
 describe("UniswapV2Wrapper", function () {
   let uniswapV2Wrapper;
   let uniswapV2Router02;
+  let uniswapV2Factory;
   let usdc;
   let weth;
   let owner;
   let user;
   let user2;
   let signerWithUSDC;
-  let addressWithUSDC = "0x532242e63c34553b10f0e4fd7d8b5be22e4b9f55";
+  let priceOfWETH;
+  let wethUsdcPairAddress;
 
   beforeEach(async function () {
     [owner, user] = await ethers.getSigners();
+    console.log("wethAddress: ", chains[network.name].wethAddress);
+    console.log("usdcAddress: ", chains[network.name].usdcAddress);
     // Deploy UniswapV2Wrapper
     const UniswapV2Wrapper = await ethers.getContractFactory(
       "UniswapV2Wrapper"
     );
-    uniswapV2Wrapper = await UniswapV2Wrapper.deploy(
-      chains[network.name].uniswapFactory,
+    uniswapV2Router02 = await ethers.getContractAt(
+      "IUniswapV2Router02",
       chains[network.name].uniswapV2Router02
     );
-    // console.log("Signer with usdc balance before impersonating: ", await ethers.provider.getBalance(addressWithUSDC));
+    uniswapV2Factory = await ethers.getContractAt(
+      "IUniswapV2Factory",
+      chains[network.name].uniswapV2Factory
+    );
+    console.log("uniswapV2Factory: ", uniswapV2Factory);
+    wethUsdcPairAddress = await uniswapV2Factory.getPair(
+      chains[network.name].wethAddress,
+      chains[network.name].usdcAddress
+    );
+    console.log("WETH USDC Pair Address: ", wethUsdcPairAddress);
+    const uniswapV2Pair = await ethers.getContractAt(
+      "IUniswapV2Pair",
+      wethUsdcPairAddress
+    );
+    uniswapV2Wrapper = await UniswapV2Wrapper.deploy(
+      chains[network.name].uniswapV2Factory,
+      chains[network.name].uniswapV2Router02
+    );
+    // console.log("Signer with usdc balance before impersonating: ", await ethers.provider.getBalance(chains[network.name].addressWithUSDC));
     // Impersonate signers and provide liquidity with that signer
     await network.provider.request({
       method: "hardhat_impersonateAccount",
-      params: [addressWithUSDC],
+      params: [chains[network.name].addressWithUSDC],
     });
-    signerWithUSDC = await ethers.getSigner(addressWithUSDC);
-    // console.log("Address with usdc balance after impersonating: ", await ethers.provider.getBalance(addressWithUSDC));
+    signerWithUSDC = await ethers.getSigner(
+      chains[network.name].addressWithUSDC
+    );
+    // console.log("Address with usdc balance after impersonating: ", await ethers.provider.getBalance(chains[network.name].addressWithUSDC));
     user2 = signerWithUSDC;
 
-    // Deploy ERC20 tokens for testing
+    // Create instance of USDC and WETH for testing
     usdc = new ethers.Contract(
       chains[network.name].usdcAddress,
       erc20Abi,
@@ -47,17 +71,19 @@ describe("UniswapV2Wrapper", function () {
       erc20Abi,
       ethers.provider
     );
+    // getReserves of the token pair to get the pricing of the same
+    const reserves = uniswapV2Pair.getReserves();
+    console.log("USDC and WETH reserves: ", reserves);
   });
 
-  it("should return pair info", async function () {
-    const [reserveA, reserveB, totalSupply] = await uniswapV2Wrapper.pairInfo(
-      usdc.address,
-      weth.address
-    );
-    // console.log("ReserveA would be of usdc token: ", reserveA.toString());
-    expect(reserveA).to.be.gt(0);
-    expect(reserveB).to.be.gt(0);
-    expect(totalSupply).to.be.gt(0);
+  it("should return price of 1 WETH", async function () {
+    // When you swap 1 WETH for USDC what's the price you get in return would define price of WETH
+    priceOfWETH = uniswapV2Router02.getReserves()
+    //   10 ** 18,
+    //   chains[network.name].wethAddress,
+    //   chains[network.name].usdcAddress
+    // );
+    console.log("WETH price in USDC: ", priceOfWETH);
   });
 
   it("should swap exact tokens for ETH", async function () {

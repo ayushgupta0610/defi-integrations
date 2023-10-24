@@ -16,131 +16,133 @@ contract UniswapV2Wrapper {
         uniswapV2router02 = IUniswapV2Router02(_uniswapV2router02);
     }
 
-    // Get pair info when given pair info [Can be accessed directly]
-    function pairInfo(address tokenA, address tokenB) external view returns (uint reserveA, uint reserveB, uint totalSupply) {
-        address _pair = IUniswapV2Factory(factory).getPair(tokenA, tokenB);
-        IUniswapV2Pair pair = IUniswapV2Pair(_pair);
-        totalSupply = pair.totalSupply();
-        (uint reserves0, uint reserves1,) = pair.getReserves();
-        (reserveA, reserveB) = tokenA == pair.token0() ? (reserves0, reserves1) : (reserves1, reserves0);
-    }
-
     // Exact TokenA => ETH
-    // Would require user's approval on tokenToSwapWith for this contract for atleast amountIn value
-    function swapExactTokensForETH(address tokenToSwapWith, uint amountIn, uint amountOutMin) external returns (uint[] memory amounts) {
-        require(IERC20(tokenToSwapWith).transferFrom(msg.sender, address(this), amountIn), "ED: transferFrom failed");
-        address[] memory path = new address[](2);
-        path[0] = tokenToSwapWith;
-        path[1] = uniswapV2router02.WETH();
+    // path[0] = tokenToSwapWith;
+    // path[1] = uniswapV2router02.WETH();
+    // Would require user's approval on path[0] for this contract for amountIn value
+    function swapExactTokensForETH(address[] calldata path, uint amountIn, uint amountOutMin) external returns (uint[] memory amounts) {
+        IERC20(path[0]).transferFrom(msg.sender, address(this), amountIn);
         address uniswapV2router02Address = address(uniswapV2router02);
-        require(IERC20(tokenToSwapWith).approve(uniswapV2router02Address, amountIn), "ED: approve failed");
+        IERC20(path[0]).approve(uniswapV2router02Address, amountIn);
         return uniswapV2router02.swapExactTokensForETH(amountIn, amountOutMin, path, msg.sender, block.timestamp);
     } 
 
-    //  Exact ETH => TokenA
+    // Exact ETH => TokenA
+    // address[] memory path = new address[](2);
+    // path[0] = uniswapV2router02.WETH();
+    // path[1] = tokenToSwapTo;
     // No need of approval for tokenToSwapWith as the token to swap with is ETH
-    function swapExactETHForTokens(address tokenToSwapTo, uint amountIn, uint amountOutMin) external payable returns (uint[] memory amounts) {
+    function swapExactETHForTokens(address[] calldata path, uint amountIn, uint amountOutMin) external payable returns (uint[] memory amounts) {
         require(msg.value == amountIn, "ED: insufficient value provided");
-        address[] memory path = new address[](2);
-        path[0] = uniswapV2router02.WETH();
-        path[1] = tokenToSwapTo;
         return uniswapV2router02.swapExactETHForTokens{value: amountIn}(amountOutMin, path, msg.sender, block.timestamp);
     }
 
     // Exact TokenA => TokenB
-    // Would require user's approval on tokenToSwapWith for this contract for atleast amountIn value
-    function swapExactTokensForTokens(address tokenToSwapWith, address tokenToSwapTo, uint amountIn, uint amountOutMin) external returns (uint[] memory amounts) {
-        require(IERC20(tokenToSwapWith).transferFrom(msg.sender, address(this), amountIn), "ED: transferFrom failed");
-        address[] memory path = new address[](2);
-        path[0] = tokenToSwapWith;
-        path[1] = tokenToSwapTo;
+    // address[] memory path = new address[](2);
+    // path[0] = tokenToSwapWith;
+    // path[1] = tokenToSwapTo;
+    // Would require user's approval on path[0] for this contract for amountIn value
+    function swapExactTokensForTokens(address[] calldata path, uint amountIn, uint amountOutMin) external returns (uint[] memory amounts) {
+        IERC20(path[0]).transferFrom(msg.sender, address(this), amountIn);
         address uniswapV2router02Address = address(uniswapV2router02);
-        require(IERC20(tokenToSwapWith).approve(uniswapV2router02Address, amountIn), "ED: approve failed");
+        IERC20(path[0]).approve(uniswapV2router02Address, amountIn);
         return uniswapV2router02.swapExactTokensForTokens(amountIn, amountOutMin, path, msg.sender, block.timestamp);
     }
 
     // TokenA => Exact ETH
-    function swapTokensForExactETH(address tokenToSwapWith, uint amountOut, uint amountInMax) external returns (uint[] memory amounts) {
-        require(IERC20(tokenToSwapWith).transferFrom(msg.sender, address(this), amountInMax), "ED: transferFrom failed");
-        address[] memory path = new address[](2);
-        path[0] = tokenToSwapWith;
-        path[1] = uniswapV2router02.WETH();
+    // address[] memory path = new address[](2);
+    // path[0] = tokenToSwapWith;
+    // path[1] = tokenToSwapTo;
+    function swapTokensForExactETH(address[] calldata path, uint amountOut, uint amountInMax) external returns (uint[] memory amounts) {
+        IERC20(path[0]).transferFrom(msg.sender, address(this), amountInMax);
         address uniswapV2router02Address = address(uniswapV2router02);
-        require(IERC20(tokenToSwapWith).approve(uniswapV2router02Address, amountInMax), "ED: approve failed");
+        IERC20(path[0]).approve(uniswapV2router02Address, amountInMax);
         return uniswapV2router02.swapTokensForExactETH(amountOut, amountInMax, path, msg.sender, block.timestamp);
     }
 
-    // ETH => Exact TokenA [Testcase not working]
-    function swapETHForExactTokens(address tokenToSwapTo, uint amountOut, uint amountInMax) external payable returns (uint[] memory amounts) {
+    // ETH => Exact TokenA
+    // address[] memory path = new address[](2);
+    // path[0] = uniswapV2router02.WETH();
+    // path[1] = tokenToSwapTo;
+    function swapETHForExactTokens(address[] calldata path, uint amountOut, uint amountInMax) external payable returns (uint[] memory amounts) {
         require(msg.value == amountInMax, "ED: insufficient value provided");
-        address[] memory path = new address[](2);
-        path[0] = uniswapV2router02.WETH();
-        path[1] = tokenToSwapTo;
         return uniswapV2router02.swapETHForExactTokens{value: amountInMax}(amountOut, path, msg.sender, block.timestamp);
     }
 
     // TokenA => Exact TokenB
-    function swapTokensForExactTokens(address tokenToSwapWith, address tokenToSwapTo, uint amountInMax, uint amountOut) external returns (uint[] memory amounts) {
-        require(IERC20(tokenToSwapWith).transferFrom(msg.sender, address(this), amountInMax), "ED: transferFrom failed");
-        address[] memory path = new address[](2);
-        path[0] = tokenToSwapWith;
-        path[1] = tokenToSwapTo;
+    // address[] memory path = new address[](2);
+    // path[0] = tokenToSwapWith;
+    // path[1] = tokenToSwapTo;
+    function swapTokensForExactTokens(address[] calldata path, uint amountInMax, uint amountOut) external returns (uint[] memory amounts) {
+        IERC20(path[0]).transferFrom(msg.sender, address(this), amountInMax);
         address uniswapV2router02Address = address(uniswapV2router02);
-        require(IERC20(tokenToSwapWith).approve(uniswapV2router02Address, amountInMax), "ED: approve failed"); 
+        IERC20(path[0]).approve(uniswapV2router02Address, amountInMax); 
         return uniswapV2router02.swapTokensForExactTokens(amountOut, amountInMax, path, msg.sender, block.timestamp);
     }
 
-    function addLiquidity(address tokenToSwapWith, address tokenToSwapTo, uint amountOfTokenA, uint amountOfTokenB) external returns (uint amountA, uint amountB, uint liquidity) {
-        require(IERC20(tokenToSwapWith).transferFrom(msg.sender, address(this), amountOfTokenA), "ED: transferFrom failed");
-        require(IERC20(tokenToSwapTo).transferFrom(msg.sender, address(this), amountOfTokenB), "ED: transferFrom failed");
-        require(IERC20(tokenToSwapWith).approve(address(uniswapV2router02), amountOfTokenA), "ED: approve failed");
-        require(IERC20(tokenToSwapTo).approve(address(uniswapV2router02), amountOfTokenB), "ED: approve failed");
-        // The liquidity would have to be in equal amounts
+
+    function addLiquidity(address tokenToSwapWith, address tokenToSwapTo, uint amountADesired, uint amountBDesired, uint amountAMin, uint amountBMin) external returns (uint amountA, uint amountB, uint liquidity) {
+        IERC20(tokenToSwapWith).transferFrom(msg.sender, address(this), amountADesired);
+        IERC20(tokenToSwapTo).transferFrom(msg.sender, address(this), amountBDesired);
+        IERC20(tokenToSwapWith).approve(address(uniswapV2router02), amountADesired);
+        IERC20(tokenToSwapTo).approve(address(uniswapV2router02), amountBDesired);
+        // The liquidity would have to be in equal amounts of USD
         return uniswapV2router02.addLiquidity(
             tokenToSwapWith,
             tokenToSwapTo,
-            amountOfTokenA,
-            amountOfTokenB,
-            0,
-            0,
+            amountADesired,
+            amountBDesired,
+            amountAMin,
+            amountBMin,
             msg.sender,
             block.timestamp
         );
     }
 
-    function addLiquidityETH(address token, uint amountTokenDesired) external payable returns (uint amountToken, uint amountETH, uint liquidity) {
+    function addLiquidityETH(address token, uint amountTokenDesired, uint amountTokenMin, uint amountETHMin) external payable returns (uint amountToken, uint amountETH, uint liquidity) {
+        require(msg.value == amountETHMin, "ED: insufficient value provided");
+        IERC20(token).transferFrom(msg.sender, address(this), amountTokenDesired);
+        IERC20(token).approve(address(uniswapV2router02), amountTokenDesired);
+        // The liquidity would have to be in equal amounts of USD
         return uniswapV2router02.addLiquidityETH(
             token,
             amountTokenDesired,
-            0,
-            0,
+            amountTokenMin,
+            amountETHMin,
             msg.sender,
             block.timestamp
         );
     }
 
-    // function removeLiquidity(address tokenToSwapWith, address tokenToSwapTo, uint amountAMin, uint amountAMin) external returns (uint amountA, uint amountB) {
-    //     // User will take out both
-    //     return uniswapV2router02.removeLiquidity(
-    //         tokenToSwapWith,
-    //         tokenToSwapTo,
-    //         uint liquidity, // How does one provide value for this
-    //         amountAMin,
-    //         amountAMin,
-    //         msg.sender,
-    //         block.timestamp
-    //     );
-    //     // The liquidity would have to be in equal amounts
-    // }
+    // TODO : User will not provide the noOfLPTokens -> He/She will provide the value of tokens he'd like to redeem
+    // Also, put some checks if the user what he/she was trying to enter is the amount that is getting cashed out
+    // Either the user will provide the value in USD or the no. of tokens for one token
+    function removeLiquidity(address tokenA, address tokenB, uint noOfLPTokens, uint amountAMin, uint amountBMin) external returns (uint amountA, uint amountB) {
+        // Check if the user would be getting X value / no of tokens like he expected or there was a sandwich attack that happened
+        // Account for slippage factor in a way
+        return uniswapV2router02.removeLiquidity(
+            tokenA,
+            tokenB,
+            noOfLPTokens,
+            amountAMin,
+            amountBMin,
+            msg.sender,
+            block.timestamp
+        );
+    }
 
-    // function removeLiquidityETH(address token, uint amountTokenMin) external payable returns (uint amountA, uint amountB)  {
-    //     return uniswapV2router02.removeLiquidityETH(
-    //         token,
-    //         uint liquidity, // How does one provide value for this
-    //         uint amountTokenMin, //
-    //         uint amountETHMin,
-    //         msg.sender,
-    //         block.timestamp
-    //     );
-    // }
+    // Also, put some checks if the user what he/she was trying to enter is the amount that is getting cashed out
+    // Either the user will provide the value in USD or the no. of tokens for one token
+    function removeLiquidityETH(address token, uint noOfLPTokens, uint amountTokenMin, uint amountETHMin) external payable returns (uint amountA, uint amountB) {
+        // Check if the user would be getting X value / no of tokens like he expected or there was a sandwich attack that happened
+        // Account for slippage factor in a way
+        return uniswapV2router02.removeLiquidityETH(
+            token,
+            noOfLPTokens,
+            amountTokenMin,
+            amountETHMin,
+            payable(msg.sender),
+            block.timestamp
+        );
+    }
 }

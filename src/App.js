@@ -104,7 +104,7 @@ function App() {
     try {
       setPairAddressLoading(true);
       const uniswapV2Factory = new ethers.Contract(
-        config[network].uniswapV2FactoryAddress,
+        config[network].uniswapV2Factory,
         UniswapV2Factory.abi,
         signer
       );

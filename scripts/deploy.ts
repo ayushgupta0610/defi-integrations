@@ -2,8 +2,8 @@ import { ethers } from "hardhat";
 import { config } from "../src/config";
 
 async function main() {
-  const factory = config["polygon"].uniswapV2FactoryAddress;
-  const uniswapV2router02 = config["polygon"].uniswapV2Router02Address;
+  const factory = config["polygon"].uniswapV2Factory;
+  const uniswapV2router02 = config["polygon"].uniswapV2Router02;
 
   const UniswapV2Wrapper = await ethers.getContractFactory("UniswapV2Wrapper");
   const uniswapV2Wrapper = await UniswapV2Wrapper.deploy(
