@@ -97,6 +97,7 @@ contract UniswapV2Wrapper {
             msg.sender,
             block.timestamp
         );
+        // Return the remaining amount to the user for both the tokens
     }
 
     function addLiquidityETH(address token, uint amountTokenDesired, uint amountTokenMin, uint amountETHMin) external payable returns (uint amountToken, uint amountETH, uint liquidity) {
@@ -112,37 +113,39 @@ contract UniswapV2Wrapper {
             msg.sender,
             block.timestamp
         );
+        // Return the remaining amount to the user for both the tokens
     }
 
-    // TODO : User will not provide the noOfLPTokens -> He/She will provide the value of tokens he'd like to redeem
-    // Also, put some checks if the user what he/she was trying to enter is the amount that is getting cashed out
-    // Either the user will provide the value in USD or the no. of tokens for one token
-    function removeLiquidity(address tokenA, address tokenB, uint noOfLPTokens, uint amountAMin, uint amountBMin) external returns (uint amountA, uint amountB) {
-        // Check if the user would be getting X value / no of tokens like he expected or there was a sandwich attack that happened
-        // Account for slippage factor in a way
-        return uniswapV2router02.removeLiquidity(
-            tokenA,
-            tokenB,
-            noOfLPTokens,
-            amountAMin,
-            amountBMin,
-            msg.sender,
-            block.timestamp
-        );
-    }
+    // // TODO : User will not provide the noOfLPTokens -> He/She will provide the value of tokens he'd like to redeem
+    // // Also, put some checks if the user what he/she was trying to enter is the amount that is getting cashed out
+    // // Either the user will provide the value in USD or the no. of tokens for one token
+    // function removeLiquidity(address tokenA, address tokenB, uint noOfLPTokens, uint amountAMin, uint amountBMin) external returns (uint amountA, uint amountB) {
+    //     // Check if the user would be getting X value / no of tokens like he expected or there was a sandwich attack that happened
+    //     // Account for slippage factor in a way
+    //     return uniswapV2router02.removeLiquidity(
+    //         tokenA,
+    //         tokenB,
+    //         noOfLPTokens,
+    //         amountAMin,
+    //         amountBMin,
+    //         msg.sender,
+    //         block.timestamp
+    //     );
+    // // Convert what user provides as token A or token B/ETH to the equivalent LP tokens what they're trying to remove from their position
+    // }
 
-    // Also, put some checks if the user what he/she was trying to enter is the amount that is getting cashed out
-    // Either the user will provide the value in USD or the no. of tokens for one token
-    function removeLiquidityETH(address token, uint noOfLPTokens, uint amountTokenMin, uint amountETHMin) external payable returns (uint amountA, uint amountB) {
-        // Check if the user would be getting X value / no of tokens like he expected or there was a sandwich attack that happened
-        // Account for slippage factor in a way
-        return uniswapV2router02.removeLiquidityETH(
-            token,
-            noOfLPTokens,
-            amountTokenMin,
-            amountETHMin,
-            payable(msg.sender),
-            block.timestamp
-        );
-    }
+    // // Also, put some checks if the user what he/she was trying to enter is the amount that is getting cashed out
+    // // Either the user will provide the value in USD or the no. of tokens for one token
+    // function removeLiquidityETH(address token, uint noOfLPTokens, uint amountTokenMin, uint amountETHMin) external payable returns (uint amountA, uint amountB) {
+    //     // Check if the user would be getting X value / no of tokens like he expected or there was a sandwich attack that happened
+    //     // Account for slippage factor in a way
+    //     return uniswapV2router02.removeLiquidityETH(
+    //         token,
+    //         noOfLPTokens,
+    //         amountTokenMin,
+    //         amountETHMin,
+    //         payable(msg.sender),
+    //         block.timestamp
+    //     );
+    // }
 }
