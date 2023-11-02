@@ -101,15 +101,15 @@ describe("UniswapV2Wrapper", function () {
       amountIn,
       path
     );
-    console.log("Amount out min: ", amountOutMin.toString());
+    console.log("amountOutMin: ", amountOutMin.toString());
     // const amountOutMinWithSlippage = amountOutMin.sub(amountOutMin.mul(3).div(100));
     await usdc.connect(user2).approve(uniswapV2Wrapper.address, amountIn);
     const userTokenBalanceBefore = await usdc.balanceOf(user2.address);
-    console.log("userTokenBalanceBefore: ", userTokenBalanceBefore.toString());
+    console.log("userTokenBalanceBefore: ", userTokenBalanceBefore.div(parseUnits("1", DECIMALS_IN_USDC)).toString());
     const userNativeBalanceBefore = await ethers.provider.getBalance(
       user2.address
     );
-    console.log("userNativeBalanceBefore: ", userNativeBalanceBefore.toString());
+    console.log("userNativeBalanceBefore: ", userNativeBalanceBefore.div(parseUnits("1", DECIMALS_IN_WETH)).toString());
     await uniswapV2Wrapper
       .connect(user2)
       .swapExactTokensForETH(path, amountIn, amountOutMin);
@@ -120,9 +120,9 @@ describe("UniswapV2Wrapper", function () {
     expect(userTokenBalanceAfter).to.equal(
       userTokenBalanceBefore.sub(amountIn)
     );
-    console.log("userNativeBalanceBefore: ", userNativeBalanceBefore.toString());
-    console.log("userNativeBalanceAfter: ", userNativeBalanceAfter.toString());
-    expect(userNativeBalanceAfter).to.be.gt(userNativeBalanceBefore);
+    console.log("userTokenBalanceAfter: ", userTokenBalanceAfter.div(parseUnits("1", DECIMALS_IN_USDC)).toString());
+    console.log("userNativeBalanceAfter: ", userNativeBalanceAfter.div(parseUnits("1", DECIMALS_IN_WETH)).toString());
+    expect(userNativeBalanceAfter).to.be.gt(userNativeBalanceBefore); // add(amountOutMin); Gas fee would need to be deducted as well
   });
 
   // it("should swap exact ETH for tokens", async function () {

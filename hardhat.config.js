@@ -21,7 +21,7 @@ const config = {
     },
     hardhat: {
       forking: {
-        url: `https://polygon-rpc.com`,
+        url: `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
         accounts: process.env.PRIVATE_KEY1 !== undefined ? [process.env.PRIVATE_KEY1] : walletUtils.createPrivateKeyList(),
         blockNumber: 49086266
       }
