@@ -37,7 +37,7 @@ describe("UniswapV2Wrapper", function () {
   let priceOfWETH;
   let wethUsdcPairAddress;
 
-  before(async function () {
+  beforeEach(async function () {
     [owner, user] = await ethers.getSigners();
     console.log("wethAddress: ", chains[network.name].wethAddress);
     console.log("usdcAddress: ", chains[network.name].usdcAddress);
@@ -112,11 +112,9 @@ describe("UniswapV2Wrapper", function () {
     // const amountOutMinWithSlippage = amountOutMin.sub(amountOutMin.mul(3).div(100));
     await usdc.connect(user2).approve(uniswapV2Wrapper.address, amountIn);
     const userTokenBalanceBefore = await usdc.balanceOf(user2.address);
-    console.log("userTokenBalanceBefore: ", userTokenBalanceBefore.div(parseUnits("1", DECIMALS_IN_USDC)).toString());
     const userNativeBalanceBefore = await ethers.provider.getBalance(
       user2.address
     );
-    console.log("userNativeBalanceBefore: ", userNativeBalanceBefore.div(parseUnits("1", DECIMALS_IN_WETH)).toString());
     await uniswapV2Wrapper
       .connect(user2)
       .swapExactTokensForETH(path, amountIn, amountOutMin);
@@ -127,9 +125,7 @@ describe("UniswapV2Wrapper", function () {
     expect(userTokenBalanceAfter).to.equal(
       userTokenBalanceBefore.sub(amountIn)
     );
-    console.log("userTokenBalanceAfter: ", userTokenBalanceAfter.div(parseUnits("1", DECIMALS_IN_USDC)).toString());
-    console.log("userNativeBalanceAfter: ", userNativeBalanceAfter.div(parseUnits("1", DECIMALS_IN_WETH)).toString());
-    expect(userNativeBalanceAfter).to.be.gt(userNativeBalanceBefore); // add(amountOutMin); Gas fee would need to be deducted as well
+    expect(userNativeBalanceAfter).to.be.gt(userNativeBalanceBefore); // .add(amountOutMin); Gas fee would need to be deducted as well
   });
 
   it("should swap exact ETH for tokens", async function () {
@@ -263,38 +259,53 @@ describe("UniswapV2Wrapper", function () {
     expect(contractUSDCBalanceAfter).to.be.equal(contractUSDCBalanceBefore).to.be.equal(0);
   });
 
-  // it("should add liquidity", async function () {
-  //   const amountOfTokenA = parseUnits("1000", DECIMALS_IN_USDC);
-  //   const amountOfTokenB = parseEther("2");
-  //   await usdc.connect(user2).approve(uniswapV2Wrapper.address, amountOfTokenA);
-  //   await weth.connect(user2).approve(uniswapV2Wrapper.address, amountOfTokenB);
-  //   const [reserveABefore, reserveBBefore, totalSupplyBefore] =
-  //     await uniswapV2Wrapper.pairInfo(usdc.address, weth.address);
-  //   await uniswapV2Wrapper
-  //     .connect(user2)
-  //     .addLiquidity(usdc.address, weth.address, amountOfTokenA, amountOfTokenB);
-  //   const [reserveAAfter, reserveBAfter, totalSupplyAfter] =
-  //     await uniswapV2Wrapper.pairInfo(usdc.address, weth.address);
-  //   // Verify that liquidity has been added
-  //   expect(totalSupplyAfter).to.be.gt(totalSupplyBefore);
-  //   expect(reserveAAfter).to.be.gt(reserveABefore);
-  //   expect(reserveBAfter).to.be.gt(reserveBBefore);
-  // });
+  it("should add liquidity", async function () {
+    const amountADesired = parseUnits("200", DECIMALS_IN_USDC);
+    const amountAMin = parseUnits("100", DECIMALS_IN_USDC);
+    const amountBDesired = parseEther("200");
+    const amountBMin = parseEther("100");
+    const path = [usdc.address, weth.address];
+    const amountInMax = await getAmountIn(
+      uniswapV2Router02,
+      amountBDesired,
+      path
+    );
+    await usdc.connect(user2).approve(uniswapV2Wrapper.address, amountADesired.add(amountInMax));
+    await uniswapV2Wrapper.connect(user2).swapTokensForExactTokens(
+      path,
+      amountInMax,
+      amountBDesired
+    );
+    // await usdc.connect(user2).approve(uniswapV2Wrapper.address, amountADesired.add(amountInMax));
+    await weth.connect(user2).approve(uniswapV2Wrapper.address, amountBDesired);
+    const [reserveABefore, reserveBBefore, totalSupplyBefore] =
+      await uniswapV2Wrapper.pairInfo(usdc.address, weth.address);
+    await uniswapV2Wrapper
+      .connect(user2)
+      .addLiquidity(usdc.address, weth.address, amountADesired, amountBDesired, amountAMin, amountBMin);
+    const [reserveAAfter, reserveBAfter, totalSupplyAfter] =
+      await uniswapV2Wrapper.pairInfo(usdc.address, weth.address);
 
-  // it("should add liquidity with ETH", async function() {
-  //   const amountOfTokenA = parseUnits("1000", DECIMALS_IN_USDC);
-  //   const amountOfTokenB = parseEther("2");
-  //   await usdc.connect(user2).approve(uniswapV2Wrapper.address, amountOfTokenA);
-  //   await weth.connect(user2).approve(uniswapV2Wrapper.address, amountOfTokenB);
-  //   const [reserveTokenBefore, reserveETHBefore, totalSupplyBefore] = await uniswapV2Wrapper.pairInfo(usdc.address, chains[network.name].wethAddress);
+    // Verify that liquidity has been added
+    expect(totalSupplyAfter).to.be.gt(totalSupplyBefore);
+    expect(reserveAAfter).to.be.gt(reserveABefore);
+    expect(reserveBAfter).to.be.gt(reserveBBefore);
+  });
 
-  //   await uniswapV2Wrapper.connect(user).addLiquidityETH(usdc.address, amountTokenDesired, { value: parseEther("1") });
+  it("should add liquidity with ETH", async function() {
+    const amountOfToken = parseUnits("200", DECIMALS_IN_USDC);
+    const amountTokenMin = parseUnits("100", DECIMALS_IN_USDC);
+    const amountETHMin = parseEther("200");
+    await usdc.connect(user2).approve(uniswapV2Wrapper.address, amountOfToken);
+    // await weth.connect(user2).approve(uniswapV2Wrapper.address, amountOfETH);
+    const [reserveTokenBefore, reserveETHBefore, totalSupplyBefore] = await uniswapV2Wrapper.pairInfo(usdc.address, chains[network.name].wethAddress);
 
-  //   const [reserveTokenAfter, reserveETHAfter, totalSupplyAfter] = await uniswapV2Wrapper.pairInfo(usdc.address, chains[network.name].wethAddress);
+    await uniswapV2Wrapper.connect(user2).addLiquidityETH(usdc.address, amountOfToken, amountTokenMin, amountETHMin, { value: amountETHMin });
+    const [reserveTokenAfter, reserveETHAfter, totalSupplyAfter] = await uniswapV2Wrapper.pairInfo(usdc.address, chains[network.name].wethAddress);
 
-  //   // Verify that liquidity has been added
-  //   expect(totalSupplyAfter).to.be.gt(totalSupplyBefore);
-  //   expect(reserveTokenAfter).to.be.gt(reserveTokenBefore);
-  //   expect(reserveETHAfter).to.be.gt(reserveETHBefore);
-  // });
+    // Verify that liquidity has been added
+    expect(totalSupplyAfter).to.be.gt(totalSupplyBefore);
+    expect(reserveTokenAfter).to.be.gt(reserveTokenBefore);
+    expect(reserveETHAfter).to.be.gt(reserveETHBefore);
+  });
 });
