@@ -5,14 +5,15 @@ pragma solidity ^0.8.12;
 import "./UniswapV2/interfaces/IUniswapV2Pair.sol";
 import "./UniswapV2/interfaces/IUniswapV2Router02.sol";
 import "./UniswapV2/interfaces/IUniswapV2Factory.sol";
+import { ReentrancyGuard } from "./Openzeppelin/ReentrancyGuard.sol";
+// import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract UniswapV2Wrapper {
+contract UniswapV2Wrapper is ReentrancyGuard {
     address public factory;
     IUniswapV2Router02 public uniswapV2router02;
     
     constructor(address _factory, address payable _uniswapV2router02) public {
         factory = _factory;
-        // uniswapV2router02Address = _uniswapV2router02;
         uniswapV2router02 = IUniswapV2Router02(_uniswapV2router02);
     }
 
@@ -28,7 +29,6 @@ contract UniswapV2Wrapper {
     } 
 
     // Exact ETH => TokenA
-    // address[] memory path = new address[](2);
     // path[0] = uniswapV2router02.WETH();
     // path[1] = tokenToSwapTo;
     // No need of approval for tokenToSwapWith as the token to swap with is ETH
@@ -38,7 +38,6 @@ contract UniswapV2Wrapper {
     }
 
     // Exact TokenA => TokenB
-    // address[] memory path = new address[](2);
     // path[0] = tokenToSwapWith;
     // path[1] = tokenToSwapTo;
     // Would require user's approval on path[0] for this contract for amountIn value
@@ -50,23 +49,25 @@ contract UniswapV2Wrapper {
     }
 
     // TokenA => Exact ETH
-    // address[] memory path = new address[](2);
     // path[0] = tokenToSwapWith;
     // path[1] = tokenToSwapTo;
     function swapTokensForExactETH(address[] calldata path, uint amountOut, uint amountInMax) external returns (uint[] memory amounts) {
         IERC20(path[0]).transferFrom(msg.sender, address(this), amountInMax);
         address uniswapV2router02Address = address(uniswapV2router02);
         IERC20(path[0]).approve(uniswapV2router02Address, amountInMax);
-        return uniswapV2router02.swapTokensForExactETH(amountOut, amountInMax, path, msg.sender, block.timestamp);
+        amounts = uniswapV2router02.swapTokensForExactETH(amountOut, amountInMax, path, msg.sender, block.timestamp);
+        // Return the remaining amount to the user for both the tokens
+        IERC20(path[0]).transfer(msg.sender, amountInMax-amounts[0]);
     }
 
     // ETH => Exact TokenA
-    // address[] memory path = new address[](2);
     // path[0] = uniswapV2router02.WETH();
     // path[1] = tokenToSwapTo;
-    function swapETHForExactTokens(address[] calldata path, uint amountOut, uint amountInMax) external payable returns (uint[] memory amounts) {
+    function swapETHForExactTokens(address[] calldata path, uint amountOut, uint amountInMax) external nonReentrant payable returns (uint[] memory amounts) {
         require(msg.value == amountInMax, "ED: insufficient value provided");
-        return uniswapV2router02.swapETHForExactTokens{value: amountInMax}(amountOut, path, msg.sender, block.timestamp);
+        amounts = uniswapV2router02.swapETHForExactTokens{value: amountInMax}(amountOut, path, msg.sender, block.timestamp);
+        // Return the remaining amount to the user for both the tokens
+        payable(msg.sender).transfer(amountInMax-amounts[0]);
     }
 
     // TokenA => Exact TokenB
@@ -77,7 +78,8 @@ contract UniswapV2Wrapper {
         IERC20(path[0]).transferFrom(msg.sender, address(this), amountInMax);
         address uniswapV2router02Address = address(uniswapV2router02);
         IERC20(path[0]).approve(uniswapV2router02Address, amountInMax); 
-        return uniswapV2router02.swapTokensForExactTokens(amountOut, amountInMax, path, msg.sender, block.timestamp);
+        amounts = uniswapV2router02.swapTokensForExactTokens(amountOut, amountInMax, path, msg.sender, block.timestamp);
+        IERC20(path[0]).transfer(msg.sender, amountInMax-amounts[0]);
     }
 
 
